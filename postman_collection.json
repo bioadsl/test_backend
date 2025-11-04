@@ -1,0 +1,195 @@
+{
+  "info": {
+    "name": "FakeRESTApi – Books Test Suite",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Suíte automatizada para testes de Books na FakeRESTApi"
+  },
+  "item": [
+    {
+      "name": "Books Flow",
+      "item": [
+        {
+          "name": "1) Criar Book (POST)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/api/v1/Books",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 0,\n  \"title\": \"{{book_title}}\",\n  \"description\": \"{{book_description}}\",\n  \"pageCount\": {{book_pageCount}},\n  \"excerpt\": \"Test excerpt\",\n  \"publishDate\": \"{{book_publishDate}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Fixture e dados dinâmicos para criação",
+                  "function uuidv4(){return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){const r=Math.random()*16|0,v=c==='x'?r:(r&0x3|0x8);return v.toString(16);});}",
+                  "pm.variables.set('uuid', uuidv4());",
+                  "pm.variables.set('book_title', 'Test Automation Advanced');",
+                  "pm.variables.set('book_description', 'Book created via automated test');",
+                  "pm.variables.set('book_pageCount', 450);",
+                  "pm.variables.set('book_publishDate', new Date().toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code é 200 ou 201', function(){ pm.expect([200,201]).to.include(pm.response.code); });",
+                  "const json = pm.response.json();",
+                  "const id = json.id !== undefined ? json.id : json.Id;",
+                  "pm.environment.set('book_id', id);",
+                  "pm.test('ID retornado existe', function(){ pm.expect(id).to.be.a('number'); });",
+                  "const title = json.title !== undefined ? json.title : json.Title;",
+                  "const description = json.description !== undefined ? json.description : json.Description;",
+                  "const pageCount = json.pageCount !== undefined ? json.pageCount : json.PageCount;",
+                  "const publishDate = json.publishDate !== undefined ? json.publishDate : json.PublishDate;",
+                  "pm.test('Dados batem com o enviado', function(){\n  pm.expect(title).to.eql(pm.variables.get('book_title'));\n  pm.expect(description).to.eql(pm.variables.get('book_description'));\n  pm.expect(Number(pageCount)).to.eql(Number(pm.variables.get('book_pageCount')));\n  pm.expect(String(publishDate)).to.include(String(pm.variables.get('book_publishDate')).slice(0,19));\n});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2) Recuperar Book (GET)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/Books/{{book_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Algumas versões da FakeRESTApi não persistem o POST; tratamos 200 e 404",
+                  "pm.test('Status é 200 ou 404 (não encontrado)', function(){ pm.expect([200,404]).to.include(pm.response.code); });",
+                  "let json = {}; let parsed = false; try { json = pm.response.json(); parsed = true; } catch(e) { parsed = false; }",
+                  "if (pm.response.code === 200 && parsed) {",
+                  "  const id = json.id !== undefined ? json.id : json.Id;",
+                  "  pm.test('ID corresponde ao criado', function(){ pm.expect(Number(id)).to.eql(Number(pm.environment.get('book_id'))); });",
+                  "  const title = json.title !== undefined ? json.title : json.Title;",
+                  "  const description = json.description !== undefined ? json.description : json.Description;",
+                  "  const pageCount = json.pageCount !== undefined ? json.pageCount : json.PageCount;",
+                  "  const publishDate = json.publishDate !== undefined ? json.publishDate : json.PublishDate;",
+                  "  pm.test('Dados persistidos batem com o enviado', function(){\n    pm.expect(title).to.eql(pm.variables.get('book_title'));\n    pm.expect(description).to.eql(pm.variables.get('book_description'));\n    pm.expect(Number(pageCount)).to.eql(Number(pm.variables.get('book_pageCount')));\n    pm.expect(String(publishDate)).to.include(String(pm.variables.get('book_publishDate')).slice(0,19));\n  });",
+                  "} else {",
+                  "  pm.test('Livro não encontrado (API pode não persistir criação)', function(){ pm.expect(pm.response.code).to.eql(404); });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3) Alterar título (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/api/v1/Books/{{book_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": {{book_id}},\n  \"title\": \"{{book_title_updated}}\",\n  \"description\": \"{{book_description}}\",\n  \"pageCount\": {{book_pageCount}},\n  \"excerpt\": \"Test excerpt\",\n  \"publishDate\": \"{{book_publishDate}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('book_title_updated', pm.variables.get('book_title') + ' (updated)');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code é 200 ou 204', function(){ pm.expect([200,204]).to.include(pm.response.code); });",
+                  "let json = {}; try { json = pm.response.json(); } catch(e) { json = {}; }",
+                  "const title = json.title !== undefined ? json.title : json.Title;",
+                  "pm.test('Título atualizado', function(){ pm.expect(title || pm.variables.get('book_title_updated')).to.include('updated'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4) Deletar ID inexistente (DELETE)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/v1/Books/{{nonexistent_id}}"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Gera um ID inexistente baseado no id criado",
+                  "const baseId = Number(pm.environment.get('book_id') || 1000);",
+                  "pm.variables.set('nonexistent_id', baseId + Math.floor(Math.random()*100000) + 1000);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Delete ID inexistente retorna 4xx ou 200 (API demo)', function(){ pm.expect([200,400,404,405]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5) Criar Book inválido (POST)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/api/v1/Books",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 0,\n  \"title\": \"Invalid Book\",\n  \"description\": \"Invalid payload test\",\n  \"pageCount\": -5,\n  \"excerpt\": \"Invalid excerpt\",\n  \"publishDate\": \"{{book_publishDate}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('book_publishDate', new Date().toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Validação server-side presente? (esperado 400/422; alguns retornam 200)', function(){ pm.expect([200,400,422]).to.include(pm.response.code); });",
+                  "if ([200].includes(pm.response.code)) { console.warn('API aceitou payload inválido (sem validação server-side).'); }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

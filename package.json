@@ -1,0 +1,16 @@
+{
+  "name": "test_backend_",
+  "version": "1.0.0",
+  "description": "Esta suíte usa Postman + Newman para testar o serviço de `Books` da FakeRESTApi.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:newman": "newman run postman_collection.json -e postman_environment.json"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "newman": "^6.2.1"
+  }
+}
