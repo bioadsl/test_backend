@@ -1,0 +1,37 @@
+name: Newman Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install project dependencies
+        run: |
+          npm ci || npm install
+
+      - name: Install Newman and HTML reporter
+        run: |
+          npm install --no-save newman newman-reporter-htmlextra
+
+      - name: Run Newman and generate HTML report
+        run: |
+          mkdir -p reports
+          npx newman run postman_collection.json -e postman_environment.json -r cli,htmlextra -reporter-htmlextra-export reports/newman.html
+
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-report
+          path: reports/newman.html

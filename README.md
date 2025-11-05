@@ -33,8 +33,105 @@ Pré-requisitos: Node.js e npm instalados.
    - `npm set-script test:newman "newman run postman_collection.json -e postman_environment.json"`
 
 3. Execute a suíte:
-   - `npm run test:newman`
-   - ou: `npx newman run postman_collection.json -e postman_environment.json`
+- `npm run test:newman`
+- ou: `npx newman run postman_collection.json -e postman_environment.json`
+
+## Executar via cURL
+
+Você pode executar os mesmos requests manualmente com cURL (e importá-los no Postman em Import → Raw text). Abaixo estão os comandos equivalentes aos da coleção, mantendo headers e payloads.
+
+1) Criar Book (POST `/api/v1/Books`)
+
+```
+curl --request POST "{{baseUrl}}/api/v1/Books" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "id": 0,
+    "title": "Test Automation Advanced",
+    "description": "Book created via automated test",
+    "pageCount": 450,
+    "excerpt": "Test excerpt",
+    "publishDate": "2025-11-05T12:00:00.000Z"
+  }'
+```
+
+2) Recuperar Book (GET `/api/v1/Books/{id}`)
+
+```
+curl --request GET "{{baseUrl}}/api/v1/Books/<BOOK_ID>"
+```
+
+3) Alterar título (PUT `/api/v1/Books/{id}`)
+
+```
+curl --request PUT "{{baseUrl}}/api/v1/Books/<BOOK_ID>" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "id": <BOOK_ID>,
+    "title": "Test Automation Advanced (updated)",
+    "description": "Book created via automated test",
+    "pageCount": 450,
+    "excerpt": "Test excerpt",
+    "publishDate": "2025-11-05T12:00:00.000Z"
+  }'
+```
+
+4) Deletar ID inexistente (DELETE `/api/v1/Books/{id}`)
+
+```
+curl --request DELETE "{{baseUrl}}/api/v1/Books/999999"
+```
+
+5) Criar Book inválido (POST `/api/v1/Books` com `pageCount: -5`)
+
+```
+curl --request POST "{{baseUrl}}/api/v1/Books" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "id": 0,
+    "title": "Invalid Book",
+    "description": "Invalid payload test",
+    "pageCount": -5,
+    "excerpt": "Invalid excerpt",
+    "publishDate": "2025-11-05T12:00:00.000Z"
+  }'
+```
+
+Notas
+- Após executar o `POST` de criação, copie o `id` retornado e substitua `<BOOK_ID>` nos requests de `GET` e `PUT`.
+- A FakeRESTApi pode retornar `404` ao recuperar o livro recém-criado e aceitar payloads inválidos com `200` (comportamento de demo). Os testes e cURLs foram escritos para cobrir esses cenários.
+
+## Variáveis de ambiente
+- Configure no Postman: `baseUrl = https://fakerestapi.azurewebsites.net`.
+- Ao importar os cURLs com `{{baseUrl}}`, selecione o ambiente para resolver a variável.
+
+## Executar via .BAT
+- Para usar o script: `.\n+run_newman.bat`
+- Com parâmetros (coleção, ambiente, reporters):
+  - `.
+run_newman.bat postman_collection.json postman_environment.json cli`
+  - `.
+run_newman.bat postman_collection.json postman_environment.json cli,htmlextra`
+
+## Relatórios HTML (opcional)
+- Instale o reporter: `npm install --save-dev newman-reporter-htmlextra`
+- Gere relatório com `npx`:
+  - `npx newman run postman_collection.json -e postman_environment.json -r cli,htmlextra -reporter-htmlextra-export reports/newman.html`
+- Dica: crie a pasta `reports` se necessário.
+
+## CI com GitHub Actions
+- Workflow: `.github/workflows/newman.yml`
+- Dispara em `push` na `main` e manualmente (`workflow_dispatch`).
+- Passos:
+  - Faz checkout e configura Node 18.
+  - Instala dependências do projeto.
+  - Instala `newman` e `newman-reporter-htmlextra` sem salvar em `package.json`.
+  - Executa a coleção com ambiente e gera `reports/newman.html`.
+  - Publica o relatório como artefato `newman-report`.
+
+Como ver o relatório
+- Acesse a aba `Actions` do repositório GitHub e entre na execução.
+- Baixe o artefato `newman-report` para visualizar o HTML.
 
 ## Notas técnicas
 

@@ -1,6 +1,6 @@
 {
   "info": {
-    "name": "FakeRESTApi – Books Test Suite",
+    "name": "FakeRESTApi Books Test Suite",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "description": "Suíte automatizada para testes de Books na FakeRESTApi"
   },
