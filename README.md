@@ -140,6 +140,22 @@ Como ver o relatório
   - A publicação pode levar alguns minutos após o push.
   - Caso o link retorne 404 inicialmente, aguarde e recarregue.
 
+## Disparar GitHub Actions por script (.bat)
+- Script: `trigger_actions.bat` na raiz do projeto.
+- Requisitos: `git` e `curl` instalados.
+
+Como usar
+- Com token (recomendado):
+  - Crie um Personal Access Token com escopo `repo`.
+  - Execute: `trigger_actions.bat <SEU_TOKEN>`
+  - Ou defina a variável `GITHUB_TOKEN` e rode sem argumentos.
+- Sem token (fallback):
+  - O script faz um `commit` vazio e `push` para `main`, disparando o workflow.
+
+O que o script faz
+- Tenta acionar o workflow `newman.yml` via API (`workflow_dispatch`).
+- Se não houver token, aciona por `push` com `git commit --allow-empty`.
+
 ## Notas técnicas
 
 - Geração automática de dados: `uuid` e `publishDate` (ISO) são gerados via scripts no Postman.
