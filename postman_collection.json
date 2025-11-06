@@ -51,7 +51,18 @@
                   "const description = json.description !== undefined ? json.description : json.Description;",
                   "const pageCount = json.pageCount !== undefined ? json.pageCount : json.PageCount;",
                   "const publishDate = json.publishDate !== undefined ? json.publishDate : json.PublishDate;",
-                  "pm.test('Dados batem com o enviado', function(){\n  pm.expect(title).to.eql(pm.variables.get('book_title'));\n  pm.expect(description).to.eql(pm.variables.get('book_description'));\n  pm.expect(Number(pageCount)).to.eql(Number(pm.variables.get('book_pageCount')));\n  pm.expect(String(publishDate)).to.include(String(pm.variables.get('book_publishDate')).slice(0,19));\n});"
+                  "pm.test('Dados batem com o enviado', function(){\n  pm.expect(title).to.eql(pm.variables.get('book_title'));\n  pm.expect(description).to.eql(pm.variables.get('book_description'));\n  pm.expect(Number(pageCount)).to.eql(Number(pm.variables.get('book_pageCount')));\n});",
+                  "// Comparação tolerante de publishDate (normaliza milissegundos e aceita pequena diferença)",
+                  "function sameInstant(a,b,toleranceMs){ const da=new Date(a); const db=new Date(b); if(isNaN(da)||isNaN(db)){ return String(a).slice(0,19)===String(b).slice(0,19); } return Math.abs(da.getTime()-db.getTime())<= (typeof toleranceMs==='number'?toleranceMs:1000); }",
+                  "pm.test('publishDate equivalente (±1s)', function(){ pm.expect(sameInstant(publishDate, pm.variables.get('book_publishDate'), 1000)).to.be.true; });",
+                  "pm.test('Excerpt padrão aplicado', function(){ const ex = json.excerpt !== undefined ? json.excerpt : json.Excerpt; pm.expect(ex).to.eql('Test excerpt'); });",
+                  "// Persistimos também no ambiente para uso nos próximos requests",
+                  "pm.environment.set('book_title', pm.variables.get('book_title'));",
+                  "pm.environment.set('book_description', pm.variables.get('book_description'));",
+                  "pm.environment.set('book_pageCount', pm.variables.get('book_pageCount'));",
+                  "pm.environment.set('book_publishDate', pm.variables.get('book_publishDate'));",
+                  "// Encadeia para o próximo passo: GET",
+                  "pm.execution.setNextRequest('2) Recuperar Book (GET)');"
                 ]
               }
             }
@@ -79,10 +90,14 @@
                   "  const description = json.description !== undefined ? json.description : json.Description;",
                   "  const pageCount = json.pageCount !== undefined ? json.pageCount : json.PageCount;",
                   "  const publishDate = json.publishDate !== undefined ? json.publishDate : json.PublishDate;",
-                  "  pm.test('Dados persistidos batem com o enviado', function(){\n    pm.expect(title).to.eql(pm.variables.get('book_title'));\n    pm.expect(description).to.eql(pm.variables.get('book_description'));\n    pm.expect(Number(pageCount)).to.eql(Number(pm.variables.get('book_pageCount')));\n    pm.expect(String(publishDate)).to.include(String(pm.variables.get('book_publishDate')).slice(0,19));\n  });",
+                  "  pm.test('Dados persistidos batem com o enviado', function(){\n    pm.expect(title).to.eql(pm.variables.get('book_title'));\n    pm.expect(description).to.eql(pm.variables.get('book_description'));\n    pm.expect(Number(pageCount)).to.eql(Number(pm.variables.get('book_pageCount')));\n  });",
+                  "  function sameInstant(a,b,toleranceMs){ const da=new Date(a); const db=new Date(b); if(isNaN(da)||isNaN(db)){ return String(a).slice(0,19)===String(b).slice(0,19); } return Math.abs(da.getTime()-db.getTime())<= (typeof toleranceMs==='number'?toleranceMs:1000); }",
+                  "  pm.test('publishDate equivalente (±1s)', function(){ pm.expect(sameInstant(publishDate, pm.variables.get('book_publishDate'), 1000)).to.be.true; });",
                   "} else {",
                   "  pm.test('Livro não encontrado (API pode não persistir criação)', function(){ pm.expect(pm.response.code).to.eql(404); });",
-                  "}"
+                  "}",
+                  "// Encadeia para o próximo passo: PUT",
+                  "pm.execution.setNextRequest('3) Alterar título (PUT)');"
                 ]
               }
             }
@@ -107,7 +122,13 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.variables.set('book_title_updated', pm.variables.get('book_title') + ' (updated)');"
+                  "// Gera título atualizado e persiste em variável local e ambiente",
+                  "if (!pm.environment.get('book_id')) { console.warn('Aviso: book_id não está definido no ambiente (API demo pode não persistir criação).'); }",
+                  "if (!pm.environment.get('baseUrl')) { console.warn('Aviso: baseUrl não está definido no ambiente.'); }",
+                  "const baseTitle = pm.environment.get('book_title') || pm.variables.get('book_title') || 'Title';",
+                  "const updatedTitle = baseTitle + ' (updated)';",
+                  "pm.variables.set('book_title_updated', updatedTitle);",
+                  "pm.environment.set('book_title_updated', updatedTitle);"
                 ]
               }
             },
@@ -119,7 +140,20 @@
                   "pm.test('Status code é 200 ou 204', function(){ pm.expect([200,204]).to.include(pm.response.code); });",
                   "let json = {}; try { json = pm.response.json(); } catch(e) { json = {}; }",
                   "const title = json.title !== undefined ? json.title : json.Title;",
-                  "pm.test('Título atualizado', function(){ pm.expect(title || pm.variables.get('book_title_updated')).to.include('updated'); });"
+                  "pm.test('Título atualizado', function(){ pm.expect(title || pm.variables.get('book_title_updated')).to.include('updated'); });",
+                  "if (pm.response.code === 200) {",
+                  "  const id = json.id !== undefined ? json.id : json.Id;",
+                  "  const description = json.description !== undefined ? json.description : json.Description;",
+                  "  const pageCount = json.pageCount !== undefined ? json.pageCount : json.PageCount;",
+                  "  const publishDate = json.publishDate !== undefined ? json.publishDate : json.PublishDate;",
+                  "  pm.test('ID corresponde ao criado', function(){ pm.expect(Number(id || pm.environment.get('book_id'))).to.eql(Number(pm.environment.get('book_id'))); });",
+                  "  pm.test('Demais campos mantidos', function(){ pm.expect(description).to.eql(pm.environment.get('book_description')); pm.expect(Number(pageCount)).to.eql(Number(pm.environment.get('book_pageCount'))); });",
+                  "  function sameInstant(a,b,toleranceMs){ const da=new Date(a); const db=new Date(b); if(isNaN(da)||isNaN(db)){ return String(a).slice(0,19)===String(b).slice(0,19); } return Math.abs(da.getTime()-db.getTime())<= (typeof toleranceMs==='number'?toleranceMs:1000); }",
+                  "  const baselinePub = pm.environment.get('book_publishDate') || pm.variables.get('book_publishDate');",
+                  "  if (publishDate && baselinePub) { pm.test('publishDate equivalente (±1s)', function(){ pm.expect(sameInstant(publishDate, baselinePub, 1000)).to.be.true; }); }",
+                  "}",
+                  "// Encadeia para o próximo passo: DELETE inexistente",
+                  "pm.execution.setNextRequest('4) Deletar ID inexistente (DELETE)');"
                 ]
               }
             }
@@ -148,7 +182,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Delete ID inexistente retorna 4xx ou 200 (API demo)', function(){ pm.expect([200,400,404,405]).to.include(pm.response.code); });"
+                  "pm.test('Delete ID inexistente retorna 4xx ou 200 (API demo)', function(){ pm.expect([200,400,404,405]).to.include(pm.response.code); });",
+                  "if ([400,404,405].includes(pm.response.code)) { let err = {}; try { err = pm.response.json(); } catch(e){} const errTitle = err.title || err.Title || ''; const errStatus = err.status || err.Status; pm.test('Body de erro consistente (se retornou 4xx)', function(){ pm.expect(errTitle).to.be.a('string'); pm.expect([400,404,405]).to.include(Number(errStatus) || pm.response.code); }); }",
+                  "// Encadeia para o próximo passo: POST inválido",
+                  "pm.execution.setNextRequest('5) Criar Book inválido (POST)');"
                 ]
               }
             }
@@ -183,7 +220,10 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Validação server-side presente? (esperado 400/422; alguns retornam 200)', function(){ pm.expect([200,400,422]).to.include(pm.response.code); });",
-                  "if ([200].includes(pm.response.code)) { console.warn('API aceitou payload inválido (sem validação server-side).'); }"
+                  "if ([200].includes(pm.response.code)) { console.warn('API aceitou payload inválido (sem validação server-side).'); }",
+                  "if ([400,422].includes(pm.response.code)) { let body={}; try{ body=pm.response.json(); } catch(e){} pm.test('Mensagem menciona pageCount/valor negativo', function(){ const text = JSON.stringify(body).toLowerCase(); pm.expect(text).to.include('pagecount'); pm.expect(text).to.satisfy(t => t.includes('neg') || t.includes('invalid') || t.includes('must be')); }); } else if (pm.response.code === 200) { let json={}; try{ json=pm.response.json(); } catch(e){} pm.test('Confirma pageCount -5 aceito em ambiente demo', function(){ const pc = json.pageCount !== undefined ? json.pageCount : json.PageCount; pm.expect(Number(pc)).to.eql(-5); }); }",
+                  "// Finaliza o fluxo",
+                  "pm.execution.setNextRequest(null);"
                 ]
               }
             }
