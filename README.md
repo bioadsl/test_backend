@@ -133,6 +133,13 @@ Como ver o relatório
 - Acesse a aba `Actions` do repositório GitHub e entre na execução.
 - Baixe o artefato `newman-report` para visualizar o HTML.
 
+## Relatório online (GitHub Pages)
+- Após cada execução do workflow, o relatório HTML é publicado em GitHub Pages.
+- Link esperado: `https://bioadsl.github.io/test_backend/newman.html`
+- Observações:
+  - A publicação pode levar alguns minutos após o push.
+  - Caso o link retorne 404 inicialmente, aguarde e recarregue.
+
 ## Notas técnicas
 
 - Geração automática de dados: `uuid` e `publishDate` (ISO) são gerados via scripts no Postman.
