@@ -2,3 +2,6 @@
 reports/
 node_modules/
 *.log
+dispatch_response.json
+http_code.txt
+payload.json

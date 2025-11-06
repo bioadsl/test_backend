@@ -106,12 +106,10 @@ Notas
 - Ao importar os cURLs com `{{baseUrl}}`, selecione o ambiente para resolver a variável.
 
 ## Executar via .BAT
-- Para usar o script: `.\n+run_newman.bat`
+- Para usar o script: `./run_newman.bat`
 - Com parâmetros (coleção, ambiente, reporters):
-  - `.
-run_newman.bat postman_collection.json postman_environment.json cli`
-  - `.
-run_newman.bat postman_collection.json postman_environment.json cli,htmlextra`
+  - `./run_newman.bat postman_collection.json postman_environment.json cli`
+  - `./run_newman.bat postman_collection.json postman_environment.json cli,htmlextra`
 
 ## Relatórios HTML (opcional)
 - Instale o reporter: `npm install --save-dev newman-reporter-htmlextra`
@@ -136,6 +134,7 @@ Como ver o relatório
 ## Relatório online (GitHub Pages)
 - Após cada execução do workflow, o relatório HTML é publicado em GitHub Pages.
 - Link esperado: `https://bioadsl.github.io/test_backend/newman.html`
+- Dica: acessar `https://bioadsl.github.io/test_backend/` também redireciona para `newman.html`.
 - Observações:
   - A publicação pode levar alguns minutos após o push.
   - Caso o link retorne 404 inicialmente, aguarde e recarregue.
