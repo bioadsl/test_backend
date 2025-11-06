@@ -31,7 +31,9 @@ jobs:
       - name: Run Newman and generate HTML report
         run: |
           mkdir -p reports
-          npx newman run postman_collection.json -e postman_environment.json -r cli,htmlextra -reporter-htmlextra-export reports/newman.html
+          npx newman run postman_collection.json -e postman_environment.json -r cli,htmlextra --reporter-htmlextra-export reports/newman.html
+          # Fallback: if reporter wrote to default location, move it into reports
+          if [ -f newman.html ]; then mv newman.html reports/newman.html; fi
 
       - name: Create index.html redirect
         run: |
