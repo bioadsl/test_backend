@@ -149,12 +149,17 @@ Como usar
   - Crie um Personal Access Token com escopo `repo`.
   - Execute: `trigger_actions.bat <SEU_TOKEN>`
   - Ou defina a variável `GITHUB_TOKEN` e rode sem argumentos.
+  - Alternativa segura: crie um arquivo `.env.github` (não versionado) com `GITHUB_TOKEN=seu_token`.
 - Sem token (fallback):
   - O script faz um `commit` vazio e `push` para `main`, disparando o workflow.
 
 O que o script faz
 - Tenta acionar o workflow `newman.yml` via API (`workflow_dispatch`).
 - Se não houver token, aciona por `push` com `git commit --allow-empty`.
+
+Observações de segurança
+- Nunca versione seu token. O arquivo `.env.github` está listado no `.gitignore`.
+- Revogue tokens vazados imediatamente em `Settings → Developer settings → Personal access tokens`.
 
 ## Notas técnicas
 

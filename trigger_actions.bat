@@ -14,6 +14,13 @@ if not "%~1"=="" (
   set TOKEN=%GITHUB_TOKEN%
 )
 
+REM Se nao houver token ainda, tentar carregar de arquivo local .env.github (nao versionado)
+if "%TOKEN%"=="" if exist ".env.github" (
+  for /f "usebackq tokens=1,2 delims==" %%A in (".env.github") do (
+    if /I "%%A"=="GITHUB_TOKEN" set TOKEN=%%B
+  )
+)
+
 if not "%TOKEN%"=="" (
   echo [INFO] Disparando workflow via API (workflow_dispatch)...
   > payload.json echo {"ref":"%REF%"}
